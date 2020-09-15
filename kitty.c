@@ -36,9 +36,8 @@ int main(int argc, char *argv[])
 	}
 	if(optind == argc) //No input files specified
 	{
-		while((readResult = read(fdIn, buf, lim)) != 0);
+		while((readResult = read(fdIn, buf, lim)) != 0)
 		{
-			printf("%d\n", readResult);
 			if(readResult < 0)
 			{
 				printf("Error occured when reading from %s, errno = %d, %s\n", inName, errno, strerror(errno));
@@ -47,7 +46,6 @@ int main(int argc, char *argv[])
 				partialWriteResult = 0;
 				while((writeResult = write(fdOut, buf, readResult)) < readResult) //In case of partial write, try to write again after increasing buffer pointer
 				{
-					printf("writeResult: %d\n", writeResult);
 					if(writeResult < 0)
 					{
 						printf("Error occured when writing to %s, errno = %d, %s\n", outName, errno, strerror(errno));
@@ -107,7 +105,7 @@ int main(int argc, char *argv[])
 				bytesWritten += writeResult;
 				countRW += 1;
 			}
-			if(isBinary){printf("WARNING: input file is a binary file\n");}
+			if(isBinary){printf("WARNING: %s is a binary file\n", inName);}
 			printf("Input file: %s, Total bytes written: %d, Read/Writes made: %d\n", inName, bytesWritten, countRW);
 			if(fdIn != STDIN_FILENO)
 			{
