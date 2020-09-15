@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
 	{
 		for(int argIndex = optind; argIndex < argc; argIndex++)
 		{
+			bytesWritten = 0;
+			countRW = 0;
 			currentArg = argv[argIndex];
 			if(currentArg[0] == '-')
 			{
@@ -79,12 +81,19 @@ int main(int argc, char *argv[])
 					return -1;
 				}
 				writeResult = write(fdOut, buf, readResult);
+				if(writeResult < 0)
+				{
+				}
+				if(writeResult < readResult)
+				{
+					printf("Partial write occured when writing to %s
+				}
 				bytesWritten += writeResult;
 				countRW += 1;
 			}
 			if(isBinary){printf("WARNING: input file is a binary file\n");}
 			printf("Input file: %s, Total bytes written: %d, Read/Writes made: %d\n", inName, bytesWritten, countRW);
-			if(fdIn > 0)
+			if(fdIn != STDIN_FILENO)
 			{
 				closeResult = close(fdIn);
 				if(closeResult != 0)
@@ -93,6 +102,15 @@ int main(int argc, char *argv[])
 					return -1;
 				}
 			}
+		}
+	}
+	if(fdOut != STDOUT_FILENO)
+	{
+		closeResult = close(fdOut);
+		if(closeResult != 0)
+		{
+			printf("Error occured when closing %s, errno = %d, %s\n", outName, errno, strerror(errno));
+			return -1;
 		}
 	}
 	return 0;
