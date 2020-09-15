@@ -5,15 +5,15 @@
 int main(int argc, char *argv[])
 {
 	char buf[4096];
-	int lim, readResult, writeResult, getoptResult;
+	int lim, readResult, writeResult, getoptResult, fdIn, fdOut;
 	lim = sizeof(buf);
 	char *outName = NULL;
 	char *inName = NULL;
 	char *currentArg = NULL;
 	extern char *optarg;
 	extern int optind, opterr, optopt;
-	outName = STDOUT_FILENO;
-	inName = STDIN_FILENO;
+	fdOut = STDOUT_FILENO;
+	fdIn = STDIN_FILENO;
 	while((getoptResult = getopt(argc, argv, "o:")) != -1)
 	{
 		switch (getoptResult)
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 	if(argc == optind)
 	{
 		printf("No input file specifed, reading from stdin\n");
-		readResult = read(inName, buf, lim);
+		readResult = read(fdIn, buf, lim);
 		if(readResult == 0)
 		{
 			printf("End of file reached\n");
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 		else
 		{
 			printf("%d bytes read\n", readResult);
-			writeResult = write(outName, buf, readResult);
+			writeResult = write(fdOut, buf, readResult);
 			printf("%d bytes written\n", writeResult);
 		}
 	}
