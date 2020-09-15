@@ -40,22 +40,21 @@ int main(int argc, char *argv[])
 	if(optind == argc)
 	{
 		printf("No input file specifed, reading from stdin\n");
-		readResult = read(fdIn, buf, lim);
-		if(readResult == 0)
+		while((readResult = read(fdIn, buf, lim) != 0)
 		{
-			printf("End of file reached\n");
+			if(readResult < 0)
+			{
+				printf("Error occured when reading file\n");
+				return -1;
+			}
+			else
+			{
+				printf("%d bytes read\n", readResult);
+				writeResult = write(fdOut, buf, readResult);
+				printf("%d bytes written\n", writeResult);
+			}
 		}
-		else if(readResult < 0)
-		{
-			printf("Error occured when reading file\n");
-			return -1;
-		}
-		else
-		{
-			printf("%d bytes read\n", readResult);
-			writeResult = write(fdOut, buf, readResult);
-			printf("%d bytes written\n", writeResult);
-		}
+		printf("End of file reached\n");
 	}
 	else
 	{
