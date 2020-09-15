@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 	if(optind == argc)
 	{
 		printf("No input file specifed, reading from stdin\n");
-		while((readResult = read(fdIn, buf, lim) != 0)
+		while((readResult = read(fdIn, buf, lim)) != 0)
 		{
 			if(readResult < 0)
 			{
