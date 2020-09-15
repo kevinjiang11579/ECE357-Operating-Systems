@@ -3,6 +3,9 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+
 int main(int argc, char *argv[])
 {
 	char buf[4096];
@@ -14,6 +17,7 @@ int main(int argc, char *argv[])
 	extern char *optarg;
 	extern int optind, opterr, optopt;
 	_Bool outExist = 0;
+	_Bool isBinary = 0;
 	fdOut = STDOUT_FILENO;
 	fdIn = STDIN_FILENO;
 	while((getoptResult = getopt(argc, argv, "o:")) != -1)
@@ -43,7 +47,7 @@ int main(int argc, char *argv[])
 		readResult = read(fdIn, buf, lim);
 		if(readResult < 0)
 		{
-			printf("Error occured when reading file\n");
+			printf("Error occured when reading file, errno: %s\n", strerror(errno));
 			return -1;
 		}
 		else
@@ -71,9 +75,15 @@ int main(int argc, char *argv[])
 			}
 			while((readResult = read(fdIn, buf, lim)) != 0)
 			{
+				for(int i = 0; i < readResult; i++)
+				{
+					if(buf[i] < 32 && buf[i] != 10)
+					isBinary = 1;
+					break;
+				}
 				if(readResult < 0)
 				{
-					printf("Error occured when reading file\n");
+					printf("Error occured when reading file, errno: %s\n",strerror(errno));
 					return -1;
 				}
 				else
@@ -85,9 +95,19 @@ int main(int argc, char *argv[])
 			countRW += 1;
 			}
 			printf("End of file reached\n");
-			printf("Total bytes written: %d\n", bytesWritten);
-			printf("Read/Writes made: %d\n", countRW);
-			if(fdIn > 0){closeResult = close(fdIn);}
+			if(isBinary){printf("WARNING: input file is a binary file\n");}
+			if(inName == STDIN_FILENO){inName = "<standard input>";};
+			printf("Input file: %s, Total bytes written: %d, Read/Writes made: %d\n", inName, bytesWritten, countRW);
+			if(fdIn > 0)
+			{
+				closeResult = close(fdIn);
+				if(closeResult != 0)
+				{
+					printf("Error occured when closing file, errno: %s\n", strerror(errno));
+					return -1;
+				}
+				else{printf("File successfully closed\n");}
+			}
 		}
 	}
 	return 0;
