@@ -2,16 +2,18 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <fcntl.h>
 int main(int argc, char *argv[])
 {
 	char buf[4096];
-	int lim, readResult, writeResult, getoptResult, fdIn, fdOut;
+	int lim, readResult, writeResult, getoptResult, fdIn, fdOut, closeResult;
 	lim = sizeof(buf);
 	char *outName = NULL;
 	char *inName = NULL;
 	char *currentArg = NULL;
 	extern char *optarg;
 	extern int optind, opterr, optopt;
+	_Bool outExist = 0;
 	fdOut = STDOUT_FILENO;
 	fdIn = STDIN_FILENO;
 	while((getoptResult = getopt(argc, argv, "o:")) != -1)
@@ -19,8 +21,15 @@ int main(int argc, char *argv[])
 		switch (getoptResult)
 		{
 			case 'o':
+				if(outExist)
+				{
+					printf("Please specify one output file\n");
+					return -1;
+				}
 				outName = optarg;
 				printf("Output file name is %s\n", outName);
+				fdOut = open(outName, O_WRONLY|O_CREAT|O_APPEND, 0666);
+				outExist = 1;
 				break;
 		}
 	}
@@ -56,11 +65,18 @@ int main(int argc, char *argv[])
 			if(currentArg[0] == '-')
 			{
 				printf("Reading input from stdin\n");
+				fdIn = STDIN_FILENO;
+				readResult = read(fdIn, buf, lim);
+				writeResult = write(fdOut, buf, readResult);
 			}
 			else
 			{
 				inName = currentArg;
 				printf("Input file name is: %s\n", inName);
+				fdIn = open(inName, O_RDONLY);
+				readResult = read(fdIn, buf, lim);
+				writeResult = write(fdOut, buf, readResult);
+				closeResult = close(fdIn);
 			}
 		}
 	}
