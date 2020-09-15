@@ -12,10 +12,26 @@ int main(int argc, char *argv[])
 	char *currentArg = NULL;
 	extern char *optarg;
 	extern int optind, opterr, optopt;
-	if(argc == 1)
+	outName = STDOUT_FILENO;
+	inName = STDIN_FILENO;
+	while((getoptResult = getopt(argc, argv, "o:")) != -1)
 	{
-		printf("Reading from stdin, printing to stdout\n");
-		readResult = read(STDIN_FILENO, buf, lim);
+		switch (getoptResult)
+		{
+			case 'o':
+				outName = optarg;
+				printf("Output file name is %s\n", outName);
+				break;
+		}
+	}
+	if(optind == 1)
+	{
+		printf("No output file specified, printing to stdout\n");
+	}
+	if(argc == optind)
+	{
+		printf("No input file specifed, reading from stdin\n");
+		readResult = read(inName, buf, lim);
 		if(readResult == 0)
 		{
 			printf("End of file reached\n");
@@ -28,23 +44,12 @@ int main(int argc, char *argv[])
 		else
 		{
 			printf("%d bytes read\n", readResult);
-			writeResult = write(STDOUT_FILENO, buf, readResult);
+			writeResult = write(outName, buf, readResult);
 			printf("%d bytes written\n", writeResult);
 		}
-
 	}
 	else
 	{
-		while((getoptResult = getopt(argc, argv, "o:")) != -1)
-		{
-			switch (getoptResult)
-			{
-				case 'o':
-					outName = optarg;
-					printf("Output file name is %s\n", outName);
-					break;
-			}
-		}
 		for(int argIndex = optind; argIndex < argc; argIndex++)
 		{
 			currentArg = argv[argIndex];
