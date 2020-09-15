@@ -5,13 +5,14 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
 
 int main(int argc, char *argv[])
 {
 	char buf[4096];
-	int lim, readResult, writeResult, getoptResult, fdIn, fdOut, closeResult, bytesWritten, countRW;
+	int lim, readResult, writeResult, getoptResult, fdIn, fdOut, closeResult, bytesWritten, countRW, partialWriteResult;
 	lim = sizeof(buf);
-	char *outName = NULL, *inName = "<standard input>", *currentArg = NULL;
+	char *outName = "<standard output>", *inName = "<standard input>", *currentArg = NULL;
 	extern char *optarg;
 	extern int optind, opterr, optopt;
 	_Bool outExist = 0, isBinary = 0;
@@ -33,7 +34,7 @@ int main(int argc, char *argv[])
 				break;
 		}
 	}
-	if(optind == argc)
+	if(optind == argc) //No input files specified
 	{
 		while((readResult = read(fdIn, buf, lim)) != 0);
 		{
@@ -44,50 +45,67 @@ int main(int argc, char *argv[])
 			}
 			else
 			{
-				writeResult = write(fdOut, buf, readResult);
+				partialWriteResult = 0;
+				while((writeResult = write(fdOut, buf, readResult)) < readResult) //In case of partial write, try to write again after increasing buffer pointer
+				{
+					if(writeResult < 0)
+					{
+						printf("Error occured when writing to %s, errno = %d, %s\n", outName, errno, strerror(errno));
+					}
+					partialWriteResult = writeResult;
+					buf += partialWriteResult;
+				}
+				buf -= partialWriteResult;
 				bytesWritten += writeResult;
 				countRW += 1;
 			}
+			if(isBinary){printf("WARNING: input file is a binary file\n");}
+			printf("Input file: %s, Total bytes written: %d, Read/Writes made: %d\n", inName, bytesWritten, countRW);
 		}
 	}
-	else
+	else //Input files are specified
 	{
 		for(int argIndex = optind; argIndex < argc; argIndex++)
 		{
 			bytesWritten = 0;
 			countRW = 0;
 			currentArg = argv[argIndex];
-			if(currentArg[0] == '-')
+			if(currentArg[0] == '-') //Input fron stdin
 			{
 				fdIn = STDIN_FILENO;
 				inName = "<standard input>";
 			}
-			else
+			else //Input from a file
 			{
 				inName = currentArg;
 				fdIn = open(inName, O_RDONLY);
 			}
 			while((readResult = read(fdIn, buf, lim)) != 0)
 			{
-				for(int i = 0; i < readResult; i++)
+				for(int i = 0; i < readResult; i++) //Check if input file is a binary file
 				{
-					if(buf[i] < 32 && buf[i] != 10)
-					isBinary = 1;
-					break;
+					if(!(isspace(buf[i])||isprint(buf[i])))
+					{
+						isBinary = 1;
+						break;
+					}
 				}
 				if(readResult < 0)
 				{
-					printf("Error occured when reading %s, errno = %d, %s\n", inName, errno, strerror(errno));
+					printf("Error occured when reading from %s, errno = %d, %s\n", inName, errno, strerror(errno));
 					return -1;
 				}
-				writeResult = write(fdOut, buf, readResult);
-				if(writeResult < 0)
+				partialWriteResult = 0;
+				while((writeResult = write(fdOut, buf, readResult)) < readResult); //In case of partial write, try to write again after increasing buffer pointer
 				{
+					if(writeResult < 0)
+					{
+						printf("Error occured when writing to %s, errno = %d, %s\n", outName, errno, strerror(errno));
+					}
+					partialWriteResult = writeResult;
+					buf += partialWriteResult;
 				}
-				if(writeResult < readResult)
-				{
-					printf("Partial write occured when writing to %s
-				}
+				buf -= partialWriteResult;
 				bytesWritten += writeResult;
 				countRW += 1;
 			}
