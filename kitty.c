@@ -6,7 +6,7 @@
 int main(int argc, char *argv[])
 {
 	char buf[4096];
-	int lim, readResult, writeResult, getoptResult, fdIn, fdOut, closeResult;
+	int lim, readResult, writeResult, getoptResult, fdIn, fdOut, closeResult, bytesWritten, countRW;
 	lim = sizeof(buf);
 	char *outName = NULL;
 	char *inName = NULL;
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 		else
 		{
 			printf("%d bytes read\n", readResult);
-			writeResult = write(fdOut, buf, readResult)
+			writeResult = write(fdOut, buf, readResult);
 			printf("%d bytes written\n", writeResult);
 		}
 	}
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 			}
 			while((readResult = read(fdIn, buf, lim)) != 0)
 			{
-				else if(readResult < 0)
+				if(readResult < 0)
 				{
 					printf("Error occured when reading file\n");
 					return -1;
@@ -81,9 +81,12 @@ int main(int argc, char *argv[])
 					printf("%d bytes read\n", readResult);
 				}
 			writeResult = write(fdOut, buf, readResult);
-			printf("%d bytes written\n", writeResult);
+			bytesWritten += writeResult;
+			countRW += 1;
 			}
 			printf("End of file reached\n");
+			printf("Total bytes written: %d\n", bytesWritten);
+			printf("Read/Writes made: %d\n", countRW);
 			if(fdIn > 0){closeResult = close(fdIn);}
 		}
 	}
