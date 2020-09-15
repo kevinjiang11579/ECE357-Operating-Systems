@@ -9,9 +9,8 @@
 
 int main(int argc, char *argv[])
 {
-	char buf[4096];
-	int lim, readResult, writeResult, getoptResult, fdIn, fdOut, closeResult, bytesWritten, countRW, partialWriteResult;
-	lim = sizeof(buf);
+	char *buf;
+	int lim = 4096, readResult, writeResult, getoptResult, fdIn, fdOut, closeResult, bytesWritten, countRW, partialWriteResult;
 	char *outName = "<standard output>", *inName = "<standard input>", *currentArg = NULL;
 	extern char *optarg;
 	extern int optind, opterr, optopt;
