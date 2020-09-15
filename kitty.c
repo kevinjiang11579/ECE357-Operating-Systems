@@ -8,6 +8,8 @@ int main(int argc, char *argv[])
 	int lim, readResult, writeResult, getoptResult;
 	lim = sizeof(buf);
 	char *outName = NULL;
+	char *inName = NULL;
+	char *currentArg = NULL;
 	extern char *optarg;
 	extern int optind, opterr, optopt;
 	if(argc == 1)
@@ -39,11 +41,23 @@ int main(int argc, char *argv[])
 			{
 				case 'o':
 					outName = optarg;
-					printf("Output file name is %s", outName);
+					printf("Output file name is %s\n", outName);
 					break;
 			}
 		}
-		printf("optind debug: %d", optind);
+		for(int argIndex = optind; argIndex < argc; argIndex++)
+		{
+			currentArg = argv[argIndex];
+			if(currentArg[0] == '-')
+			{
+				printf("Reading input from stdin\n");
+			}
+			else
+			{
+				inName = currentArg;
+				printf("Input file name is: %s\n", inName);
+			}
+		}
 	}
 	return 0;
 }
