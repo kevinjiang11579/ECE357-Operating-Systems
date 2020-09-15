@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 	{
 		printf("No output file specified, printing to stdout\n");
 	}
-	if(argc == optind)
+	if(optind == argc)
 	{
 		printf("No input file specifed, reading from stdin\n");
 		readResult = read(fdIn, buf, lim);
@@ -66,18 +66,30 @@ int main(int argc, char *argv[])
 			{
 				printf("Reading input from stdin\n");
 				fdIn = STDIN_FILENO;
-				readResult = read(fdIn, buf, lim);
-				writeResult = write(fdOut, buf, readResult);
 			}
 			else
 			{
 				inName = currentArg;
 				printf("Input file name is: %s\n", inName);
 				fdIn = open(inName, O_RDONLY);
-				readResult = read(fdIn, buf, lim);
-				writeResult = write(fdOut, buf, readResult);
-				closeResult = close(fdIn);
 			}
+			readResult = read(fdIn, buf, lim);
+			if(readResult == 0)
+			{
+				printf("End of file reached\n");
+			}
+			else if(readResult < 0)
+			{
+				printf("Error occured when reading file\n");
+				return -1;
+			}
+			else
+			{
+				printf("%d bytes read\n", readResult);
+			}
+			writeResult = write(fdOut, buf, readResult);
+			printf("%d bytes written\n", writeResult);
+			if(fdIn > 0){closeResult = close(fdIn);}
 		}
 	}
 	return 0;
