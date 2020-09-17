@@ -15,75 +15,7 @@ extern char *optarg;
 extern int optind, opterr, optopt;
 _Bool outExist = 0, isBinary = 0;
 
-int main(int argc, char *argv[])
-{
-	fdOut = STDOUT_FILENO;
-	fdIn = STDIN_FILENO;
-	while((getoptResult = getopt(argc, argv, "o:")) != -1)
-	{
-		switch (getoptResult)
-		{
-			case 'o':
-				if(outExist)
-				{
-					printf("Please specify one output file\n");
-					return -1;
-				}
-				outName = optarg;
-				fdOut = open(outName, O_WRONLY|O_CREAT|O_APPEND, 0666);
-				outExist = 1;
-				break;
-		}
-	}
-	if(optind == argc) //No input files specified
-	{
-		readWrite();
-		printf("Input file: %s, Total bytes written: %d, Read/Writes made: %d\n", inName, bytesWritten, countRW);
-	}
-	else //Input files are specified
-	{
-		for(int argIndex = optind; argIndex < argc; argIndex++)
-		{
-			bytesWritten = 0;
-			countRW = 0;
-			currentArg = argv[argIndex];
-			if(currentArg[0] == '-') //Input fron stdin
-			{
-				fdIn = STDIN_FILENO;
-				inName = "<standard input>";
-			}
-			else //Input from a file
-			{
-				inName = currentArg;
-				fdIn = open(inName, O_RDONLY);
-			}
-			readWrite();
-			if(isBinary){printf("WARNING: %s is a binary file\n", inName);}
-			printf("Input file: %s, Total bytes written: %d, Read/Writes made: %d\n", inName, bytesWritten, countRW);
-			if(fdIn != STDIN_FILENO)
-			{
-				closeResult = close(fdIn);
-				if(closeResult != 0)
-				{
-					printf("Error occured when closing %s, errno = %d, %s\n", inName, errno, strerror(errno));
-					return -1;
-				}
-			}
-		}
-	}
-	if(fdOut != STDOUT_FILENO)
-	{
-		closeResult = close(fdOut);
-		if(closeResult != 0)
-		{
-			printf("Error occured when closing %s, errno = %d, %s\n", outName, errno, strerror(errno));
-			return -1;
-		}
-	}
-	return 0;
-}
-
-void readWrite()
+int readWrite()
 {
 	while((readResult = read(fdIn, buf, lim)) != 0)
 	{
@@ -114,4 +46,74 @@ void readWrite()
 		bytesWritten += writeResult;
 		countRW += 1;
 	}
+	return 0;
 }
+
+int main(int argc, char *argv[])
+{
+	fdOut = STDOUT_FILENO;
+	fdIn = STDIN_FILENO;
+	while((getoptResult = getopt(argc, argv, "o:")) != -1)
+	{
+		switch (getoptResult)
+		{
+			case 'o':
+				if(outExist)
+				{
+					printf("Please specify one output file\n");
+					return -1;
+				}
+				outName = optarg;
+				fdOut = open(outName, O_WRONLY|O_CREAT|O_APPEND, 0666);
+				outExist = 1;
+				break;
+		}
+	}
+	if(optind == argc) //No input files specified
+	{
+		if(readWrite() == -1) {return -1;}
+		printf("Input file: %s, Total bytes written: %d, Read/Writes made: %d\n", inName, bytesWritten, countRW);
+	}
+	else //Input files are specified
+	{
+		for(int argIndex = optind; argIndex < argc; argIndex++)
+		{
+			bytesWritten = 0;
+			countRW = 0;
+			currentArg = argv[argIndex];
+			if(currentArg[0] == '-') //Input fron stdin
+			{
+				fdIn = STDIN_FILENO;
+				inName = "<standard input>";
+			}
+			else //Input from a file
+			{
+				inName = currentArg;
+				fdIn = open(inName, O_RDONLY);
+			}
+			if(readWrite() == -1) {return -1;}
+			if(isBinary){printf("WARNING: %s is a binary file\n", inName);}
+			printf("Input file: %s, Total bytes written: %d, Read/Writes made: %d\n", inName, bytesWritten, countRW);
+			if(fdIn != STDIN_FILENO)
+			{
+				closeResult = close(fdIn);
+				if(closeResult != 0)
+				{
+					printf("Error occured when closing %s, errno = %d, %s\n", inName, errno, strerror(errno));
+					return -1;
+				}
+			}
+		}
+	}
+	if(fdOut != STDOUT_FILENO)
+	{
+		closeResult = close(fdOut);
+		if(closeResult != 0)
+		{
+			printf("Error occured when closing %s, errno = %d, %s\n", outName, errno, strerror(errno));
+			return -1;
+		}
+	}
+	return 0;
+}
+
