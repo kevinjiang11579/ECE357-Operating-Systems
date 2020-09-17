@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 			case 'o':
 				if(outExist)
 				{
-					printf("Please specify one output file\n");
+					printf("Error: Please specify only one output file.\n");
 					return -1;
 				}
 				outName = optarg;
