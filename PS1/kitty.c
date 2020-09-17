@@ -64,7 +64,11 @@ int main(int argc, char *argv[])
 					return -1;
 				}
 				outName = optarg;
-				fdOut = open(outName, O_WRONLY|O_CREAT|O_APPEND, 0666);
+				if((fdOut = open(outName, O_WRONLY|O_CREAT|O_APPEND, 0666)) == -1)
+				{
+					printf("Error occured when opening %s, errno = %d, %s\n", inName, errno, strerror(errno));
+					return -1;
+				}
 				outExist = 1;
 				break;
 		}
@@ -89,7 +93,12 @@ int main(int argc, char *argv[])
 			else //Input from a file
 			{
 				inName = currentArg;
-				fdIn = open(inName, O_RDONLY);
+				if((fdIn = open(inName, O_RDONLY)) == -1)
+				{
+					printf("Error occured when opening %s, errno = %d, %s\n", inName, errno, strerror(errno));
+					return -1;
+				}
+
 			}
 			if(readWrite() == -1) {return -1;}
 			if(isBinary){printf("WARNING: %s is a binary file\n", inName);}
