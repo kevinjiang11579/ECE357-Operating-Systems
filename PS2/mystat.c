@@ -70,11 +70,17 @@ void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *total
 			if(de->d_type = DT_REG)
 			{
 				printf("Name of file: %s, file type: %d\n", de->d_name, de->d_type);
-				fd = open(filePath, O_RDONLY);
-				fstat(fd, &st);
-				*totalBlocks += st.st_blocks;
-				*totalSize += st.st_size;
-				close(fd);
+				if((fd = open(filePath, O_RDONLY)) == -1)
+				{
+					fprintf(stderr, "Cannot open file %s in read-only mode, errno: %d, %s\n", filePath, errno, strerror(errno));
+				}
+				else
+				{
+					fstat(fd, &st);
+					*totalBlocks += st.st_blocks;
+					*totalSize += st.st_size;
+					close(fd);
+				}
 			}
 			else
 			{
