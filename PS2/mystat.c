@@ -9,18 +9,19 @@
 
 #define TYPE_NUM 16
 
-void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *totalSize);
+void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *totalSize, int *multiLinkCount);
 
 int main(int argc, char *argv[])
 {
 	int fileTypeCount[TYPE_NUM];
 	int totalBlocks = 0;
 	int totalSize = 0;
+	int multiLinkCount = 0;
 	for(int i = 0; i < TYPE_NUM; i++) // Set the array to 0 first
 	{
 		fileTypeCount[i] = 0;
 	}
-	readDirectory(argv[1], fileTypeCount, &totalBlocks, &totalSize);
+	readDirectory(argv[1], fileTypeCount, &totalBlocks, &totalSize, &multiLinkCount);
 	for(int i = 0; i < TYPE_NUM; i++)
 	{
 		if(fileTypeCount[i] > 0)
@@ -32,7 +33,7 @@ int main(int argc, char *argv[])
 
 }
 
-void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *totalSize)
+void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *totalSize, int *multiLinkCount)
 {
 	DIR *dp;
 	struct dirent *de;
@@ -57,7 +58,7 @@ void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *total
  			if(strcmp(de->d_name,".") != 0 && strcmp(de->d_name, "..") != 0)
 			{
 				printf("Next Path: %s\n", filePath);
-				readDirectory(filePath, fileTypeCount, totalBlocks, totalSize);
+				readDirectory(filePath, fileTypeCount, totalBlocks, totalSize, multiLinkCount);
 			}
 			else
 			{
@@ -73,6 +74,15 @@ void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *total
 				fstat(fd, &st);
 				*totalBlocks += st.st_blocks;
 				*totalSize += st.st_size;
+				close(fd);
+			}
+			else
+			{
+			stat(filePath, &st);
+				if(st.st_nlink > 1)
+				{
+					*multiLinkCount += 1;
+				}
 			}
 
 		}
