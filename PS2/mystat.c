@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	printf("Sum of file sizes: %d, Sum of blocks allocated: %d\n", totalSize, totalBlocks);
-
+	printf("Number of inodes with link count of more than 1: %d\n", multiLinkCount);
 }
 
 void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *totalSize, int *multiLinkCount)
