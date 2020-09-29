@@ -9,12 +9,16 @@
 
 #define TYPE_NUM 16
 
-void readDirectory(char *dName, int *fileTypeCount);
+void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, *totalSize);
 
 int main(int argc, char *argv[])
 {
 	int fileTypeCount[TYPE_NUM];
-	for(int i = 0; i < TYPE_NUM; i++)
+	int *totalBlocks;
+	int *totalSize;
+	*totalBlocks = 0;
+	*totalSize = 0;
+	for(int i = 0; i < TYPE_NUM; i++) // Set the array to 0 first
 	{
 		fileTypeCount[i] = 0;
 	}
@@ -28,13 +32,15 @@ int main(int argc, char *argv[])
 	}
 }
 
-void readDirectory(char *dName, int *fileTypeCount)
+void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, *totalSize)
 {
 	DIR *dp;
 	struct dirent *de;
-	char nextPath[256];
+	struct stat st;
+	char filePath[256];
 	char startPath[256];
-	strcpy(startPath, dName);
+	int fd;
+
 	printf("Directory Name: %s\n", startPath);
 	if(!(dp = opendir(dName)))
 	{
@@ -44,20 +50,32 @@ void readDirectory(char *dName, int *fileTypeCount)
 	errno = 0;
 	while(de = readdir(dp))
 	{
-		if(de->d_type == DT_DIR)
+		strcpy(filePath, dName);
+		strcat(filePath, "/");
+		strcat(filePath, de->d_name);
+		if(strcmp(de->d_type, DT_DIR) == 0)
 		{
  			if(strcmp(de->d_name,".") != 0 && strcmp(de->d_name, "..") != 0)
 			{
-				strcpy(nextPath, dName);
-				strcat(nextPath, "/");
-				strcat(nextPath, de->d_name);
-				printf("Next Path: %s\n", nextPath);
-				readDirectory(nextPath, fileTypeCount);
+				printf("Next Path: %s\n", filePath);
+				readDirectory(nextPath, fileTypeCount, totalBlocks, totalSize);
+			}
+			else
+			{
+				stat(filePath, &st);
 			}
 		}
 		else
 		{
-			printf("Name of file: %s, file type: %d\n", de->d_name, de->d_type);
+			if(strcmp(de->d_type, DT_REG) == 0)
+			{
+				printf("Name of file: %s, file type: %d\n", de->d_name, de->d_type);
+				fd = open(filePath, O_RDONLY);
+				fstat(fd, &st);
+				*totalBlocks += st.st_blocks;
+				*totalSize += st.st_size;
+			}
+
 		}
 		fileTypeCount[de->d_type] += 1;
 	}
