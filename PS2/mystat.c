@@ -14,12 +14,16 @@ void readDirectory(char *dName, int *fileTypeCount);
 int main(int argc, char *argv[])
 {
 	int fileTypeCount[TYPE_NUM];
+	for(int i = 0; i < TYPE_NUM; i++)
+	{
+		fileTypeCount[i] = 0;
+	}
 	readDirectory(argv[1], fileTypeCount);
 	for(int i = 0; i < TYPE_NUM; i++)
 	{
 		if(fileTypeCount[i] > 0)
 		{
-			printf("Number of files of type %d: %d\n", i, fileTypeCount[i]);
+			printf("Number of inodes of type %d: %d\n", i, fileTypeCount[i]);
 		}
 	}
 }
@@ -48,7 +52,7 @@ void readDirectory(char *dName, int *fileTypeCount)
 				strcat(nextPath, "/");
 				strcat(nextPath, de->d_name);
 				printf("Next Path: %s\n", nextPath);
-				readDirectory(nextPath);
+				readDirectory(nextPath, fileTypeCount);
 			}
 		}
 		else
