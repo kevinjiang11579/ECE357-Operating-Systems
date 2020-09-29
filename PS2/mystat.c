@@ -7,14 +7,24 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-void readDirectory(char *dName);
+#define TYPE_NUM 16
+
+void readDirectory(char *dName, int *fileTypeCount);
 
 int main(int argc, char *argv[])
 {
-	readDirectory(argv[1]);
+	int fileTypeCount[TYPE_NUM];
+	readDirectory(argv[1], fileTypeCount);
+	for(int i = 0; i < TYPE_NUM; i++)
+	{
+		if(fileTypeCount[i] > 0)
+		{
+			printf("Number of files of type %d: %d\n", i, fileTypeCount[i]);
+		}
+	}
 }
 
-void readDirectory(char *dName)
+void readDirectory(char *dName, int *fileTypeCount)
 {
 	DIR *dp;
 	struct dirent *de;
@@ -45,6 +55,7 @@ void readDirectory(char *dName)
 		{
 			printf("Name of file: %s, file type: %d\n", de->d_name, de->d_type);
 		}
+		fileTypeCount[de->d_type] += 1;
 	}
 	closedir(dp);
 	return;
