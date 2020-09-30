@@ -70,13 +70,14 @@ void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *total
 			if(de->d_type = DT_REG)
 			{
 				printf("Name of file: %s, file type: %d\n", de->d_name, de->d_type);
-				if((fd = open(filePath, O_RDONLY)) == -1)
+				if((fd = open(filePath, O_PATH)) == -1)
 				{
-					fprintf(stderr, "Cannot open file %s in read-only mode, errno: %d, %s\n", filePath, errno, strerror(errno));
+					fprintf(stderr, "Cannot open file %s with O_PATH mode, errno: %d, %s\n", filePath, errno, strerror(errno));
 				}
 				else
 				{
 					fstat(fd, &st);
+					printf("Inode type: %d\n", st.st_mode);
 					*totalBlocks += st.st_blocks;
 					*totalSize += st.st_size;
 					close(fd);
