@@ -9,9 +9,9 @@
 
 int main(int argc, char *argv[])
 {
-	if((symlink(argv[1], argv[2])) == -1);
+	if((symlink(argv[1], argv[2])) == -1)
 	{
-		fprintf(stderr, "Failed to create symbolic link: %s", strerr(errno));
+		fprintf(stderr, "Failed to create symbolic link, errno: %d, %s\n", errno, strerror(errno));
 	}
 
 }
