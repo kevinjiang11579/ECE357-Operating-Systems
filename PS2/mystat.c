@@ -9,7 +9,7 @@
 
 #define TYPE_NUM 16
 
-void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *totalSize, int *multiLinkCount);
+void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *totalSize, int *multiLinkCount, int *badSymLinkCount);
 
 int main(int argc, char *argv[])
 {
@@ -17,11 +17,12 @@ int main(int argc, char *argv[])
 	int totalBlocks = 0;
 	int totalSize = 0;
 	int multiLinkCount = 0;
+	int badSymLinkCount = 0;
 	for(int i = 0; i < TYPE_NUM; i++) // Set the array to 0 first
 	{
 		fileTypeCount[i] = 0;
 	}
-	readDirectory(argv[1], fileTypeCount, &totalBlocks, &totalSize, &multiLinkCount);
+	readDirectory(argv[1], fileTypeCount, &totalBlocks, &totalSize, &multiLinkCount, &badSymLinkCount);
 	for(int i = 0; i < TYPE_NUM; i++)
 	{
 		if(fileTypeCount[i] > 0)
@@ -33,7 +34,7 @@ int main(int argc, char *argv[])
 	printf("Number of inodes with link count of more than 1: %d\n", multiLinkCount);
 }
 
-void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *totalSize, int *multiLinkCount)
+void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *totalSize, int *multiLinkCount, int *badSymLinkCount)
 {
 	DIR *dp;
 	struct dirent *de;
@@ -44,7 +45,7 @@ void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *total
 	printf("Directory Name: %s\n", dName);
 	if(!(dp = opendir(dName)))
 	{
-		fprintf(stderr,"Cannot open directory %s, errno: %d, %s\n", dName, errno, strerror(errno));
+		fprintf(stderr,"Cannot open directory %s, %s. Skipping directory\n", dName, strerror(errno));
 		return;	
 	}
 	errno = 0;
@@ -58,7 +59,7 @@ void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *total
  			if(strcmp(de->d_name,".") != 0 && strcmp(de->d_name, "..") != 0)
 			{
 				printf("Next Path: %s\n", filePath);
-				readDirectory(filePath, fileTypeCount, totalBlocks, totalSize, multiLinkCount);
+				readDirectory(filePath, fileTypeCount, totalBlocks, totalSize, multiLinkCount, badSymLinkCount);
 			}
 			else
 			{
@@ -70,14 +71,13 @@ void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *total
 			if(de->d_type = DT_REG)
 			{
 				printf("Name of file: %s, file type: %d\n", de->d_name, de->d_type);
-				if((fd = open(filePath, O_PATH)) == -1)
+				if((fd = open(filePath, O_RDONLY)) == -1)
 				{
-					fprintf(stderr, "Cannot open file %s with O_PATH mode, errno: %d, %s\n", filePath, errno, strerror(errno));
+					fprintf(stderr, "Cannot open file %s in read-only mode, %s, skipping file\n", filePath, strerror(errno));
 				}
 				else
 				{
 					fstat(fd, &st);
-					printf("Inode type: %d\n", st.st_mode);
 					*totalBlocks += st.st_blocks;
 					*totalSize += st.st_size;
 					close(fd);
@@ -85,11 +85,17 @@ void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *total
 			}
 			else
 			{
-			stat(filePath, &st);
-				if(st.st_nlink > 1)
+				stat(filePath, &st);
+				if(st.st_nlink > 1){*multiLinkCount += 1;}
+				if(st.st_mode == S_IFLNK)
 				{
-					*multiLinkCount += 1;
+					if((fd = open(filePath,O_RDONLY)) == -1)
+					{
+						*badSymLinkCount += 1;
+					}
+					close(fd);
 				}
+
 			}
 
 		}
