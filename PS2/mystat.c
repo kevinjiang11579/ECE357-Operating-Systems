@@ -7,31 +7,44 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define TYPE_NUM 16
+#define NUM_TYPES 7
+
+enum typeindex{sock_type, symlink_type, reg_type, blkdev_type, dir_type, chardev_type, fifo_type};
 
 void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *totalSize, int *multiLinkCount, int *badSymLinkCount);
 
 int main(int argc, char *argv[])
 {
-	int fileTypeCount[TYPE_NUM];
+	int fileTypeCount[NUM_TYPES];
 	int totalBlocks = 0;
 	int totalSize = 0;
 	int multiLinkCount = 0;
 	int badSymLinkCount = 0;
-	for(int i = 0; i < TYPE_NUM; i++) // Set the array to 0 first
+	char *typeNames[NUM_TYPES] = {[sock_type] = "Sock", [symlink_type] = "Symbolic Link",
+								[reg_type] = "File", [blkdev_type] = "Block Device", [dir_type] = "Directory",
+								[chardev_type] = "Character Device", [fifo_type] = "FIFO"};
+	for(int i = 0; i < NUM_TYPES; i++) // Set the array to 0 first
 	{
 		fileTypeCount[i] = 0;
 	}
+
 	readDirectory(argv[1], fileTypeCount, &totalBlocks, &totalSize, &multiLinkCount, &badSymLinkCount);
-	for(int i = 0; i < TYPE_NUM; i++)
+
+	printf("------------------------------\nNumber of inodes of each type\n");
+	for(int i = 0; i < NUM_TYPES; i++)
 	{
 		if(fileTypeCount[i] > 0)
 		{
-			printf("Number of inodes of type %d: %d\n", i, fileTypeCount[i]);
+			printf("%s: %d\n", typeNames[i], fileTypeCount[i]);
 		}
 	}
-	printf("Sum of file sizes: %d, Sum of blocks allocated: %d\n", totalSize, totalBlocks);
+	printf("------------------------------\n");
+	printf("Sum of file sizes: %d\nSum of blocks allocated: %d\nRatio of Size to Blocks: %d\n", totalSize, totalBlocks, totalSize/totalBlocks);
+	printf("------------------------------\n");
 	printf("Number of inodes with link count of more than 1: %d\n", multiLinkCount);
+	printf("------------------------------\n");
+	printf("Number of symbolic links that did not resolve to a valid target: %d\n", badSymLinkCount);
+	return 0;
 }
 
 void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *totalSize, int *multiLinkCount, int *badSymLinkCount)
@@ -42,10 +55,10 @@ void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *total
 	char filePath[256];
 	int fd;
 
-	printf("Directory Name: %s\n", dName);
+	//printf("Directory Name: %s\n", dName);
 	if(!(dp = opendir(dName)))
 	{
-		fprintf(stderr,"Cannot open directory %s, %s. Skipping directory\n", dName, strerror(errno));
+		fprintf(stderr,"Cannot read directory %s, %s. Skipping directory.\n", dName, strerror(errno));
 		return;	
 	}
 	errno = 0;
@@ -54,26 +67,26 @@ void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *total
 		strcpy(filePath, dName);
 		strcat(filePath, "/");
 		strcat(filePath, de->d_name);
-		if(de->d_type == DT_DIR)
+		lstat(filePath, &st);
+		if((st.st_mode & S_IFMT) == S_IFDIR)
 		{
- 			if(strcmp(de->d_name,".") != 0 && strcmp(de->d_name, "..") != 0)
+ 			if(strcmp(de->d_name,".") != 0 && strcmp(de->d_name, "..") != 0 && strcmp(de->d_name, "proc") != 0)
 			{
-				printf("Next Path: %s\n", filePath);
+				//printf("Next Path: %s\n", filePath);
+				fileTypeCount[dir_type] += 1;
 				readDirectory(filePath, fileTypeCount, totalBlocks, totalSize, multiLinkCount, badSymLinkCount);
-			}
-			else
-			{
-				stat(filePath, &st);
 			}
 		}
 		else
 		{
-			if(de->d_type = DT_REG)
+			*multiLinkCount += st.st_nlink > 1;
+			//printf("Name of file: %s, file type: %d\n", de->d_name, de->d_type);
+			if((st.st_mode & S_IFMT) == S_IFREG)
 			{
-				printf("Name of file: %s, file type: %d\n", de->d_name, de->d_type);
+				fileTypeCount[reg_type] += 1;
 				if((fd = open(filePath, O_RDONLY)) == -1)
 				{
-					fprintf(stderr, "Cannot open file %s in read-only mode, %s, skipping file\n", filePath, strerror(errno));
+					fprintf(stderr, "Cannot open file %s for reading, %s. Skipping file.\n", filePath, strerror(errno));
 				}
 				else
 				{
@@ -83,23 +96,19 @@ void readDirectory(char *dName, int *fileTypeCount, int *totalBlocks, int *total
 					close(fd);
 				}
 			}
-			else
+			else if((st.st_mode & S_IFMT) == S_IFLNK)
 			{
-				stat(filePath, &st);
-				if(st.st_nlink > 1){*multiLinkCount += 1;}
-				if(st.st_mode == S_IFLNK)
+				fileTypeCount[symlink_type] += 1;
+				//printf("Symbolic link found!\n");
+				if((fd = open(filePath,O_RDONLY)) == -1)
 				{
-					if((fd = open(filePath,O_RDONLY)) == -1)
-					{
-						*badSymLinkCount += 1;
-					}
-					close(fd);
+					//printf("This symbolic link is hanging\n");
+					*badSymLinkCount += 1;
 				}
-
+				close(fd);
 			}
 
 		}
-		fileTypeCount[de->d_type] += 1;
 	}
 	closedir(dp);
 	return;
