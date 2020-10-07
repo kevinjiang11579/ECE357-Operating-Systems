@@ -1,0 +1,15 @@
+------------------------------
+Number of inodes of each type
+Symbolic Link: 3
+File: 66
+Directory: 37
+------------------------------
+Sum of file sizes: 666646
+Sum of blocks allocated: 1704
+Ratio of Size to Blocks: 391
+------------------------------
+Number of inodes with link count of more than 1: 2
+------------------------------
+Number of symbolic links that did not resolve to a valid target: 1
+------------------------------
+Number of entries with "problematic" names: 0
