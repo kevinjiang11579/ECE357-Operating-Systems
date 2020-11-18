@@ -61,10 +61,11 @@ int main(int argc, char *argv[]){
 						}
 					}
 				}
+				/*
 				if(msync(mmapAddr, fileSize, MS_SYNC) == -1){
 					perror("Error in msync");
 					return -1;
-				}
+				}*/
 				munmap(mmapAddr, fileSize);
 			}
 		}
