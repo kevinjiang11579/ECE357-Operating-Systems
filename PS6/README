@@ -1,0 +1,7 @@
+Screenshot explanations:
+For Part2DSuccess, that is the output when my code is compiled and run as it is
+For Part2DFail, I took out the spinlocks for fifo_wr
+
+Note:
+I don't have sem.c or fifo.c, I just implemented everything in the header file. I know this is bad practice, but
+I only realized that I could compile multiple .c files near the end of writing this code. Pleeeeeeease dont deduct points for this
